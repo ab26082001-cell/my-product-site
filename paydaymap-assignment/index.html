@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PaydayMap — Make your salary last the month</title>
+<style>
+:root{--ink:#17221d;--muted:#5e6e65;--bg:#f4f1e9;--card:#fffdf7;--accent:#2f6f54;--accent2:#d7eadf;--line:#d9ddd6}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}.wrap{max-width:1120px;margin:auto;padding:0 28px}nav{height:72px;display:flex;align-items:center;justify-content:space-between}.brand{font-weight:800;font-size:22px}.pill{background:var(--ink);color:white;text-decoration:none;padding:11px 18px;border-radius:999px;font-weight:700}.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center;padding:70px 0 55px}.eyebrow{display:inline-block;background:var(--accent2);padding:7px 11px;border-radius:999px;font-size:13px;font-weight:800;color:var(--accent)}h1{font-size:64px;line-height:1;letter-spacing:-.05em;margin:20px 0}.lead{font-size:20px;color:var(--muted)}.btn{border:0;border-radius:12px;padding:14px 20px;font-weight:800;font-size:15px;cursor:pointer}.primary{background:var(--accent);color:white}.mock,.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px}.section{padding:60px 0}.section h2{font-size:38px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.feature{background:var(--ink);color:white;border-radius:28px;padding:34px;margin:38px 0}.formgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.field label{font-size:12px;font-weight:800;display:block;margin-bottom:6px}.field input{width:100%;background:#24332b;border:1px solid #405149;color:white;border-radius:10px;padding:12px}.result{margin-top:18px;background:#23352c;border-radius:14px;padding:18px;display:none;white-space:pre-wrap}.proof{display:flex;gap:32px;margin-top:20px}.proof strong{font-size:24px;display:block}.metric{display:flex;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--line)}.footer{padding:35px 0;color:var(--muted);font-size:13px}@media(max-width:800px){.hero,.grid3,.formgrid{grid-template-columns:1fr}h1{font-size:44px}}
+</style>
+</head>
+<body><div class="wrap">
+<nav><div class="brand">PaydayMap</div><a class="pill" href="#try">Try the 30-Day Reset</a></nav>
+<section class="hero"><div><span class="eyebrow">PERSONAL FINANCE FOR YOUR FIRST PAYCHEQUES</span><h1>Know what you can spend today without regretting it on the 28th.</h1><p class="lead">PaydayMap turns one monthly salary into a simple weekly spending lane, flags the two easiest cuts, and keeps the plan usable without linking your bank account.</p></div><div class="mock"><h3>Your October map</h3><div class="metric"><span>Take-home pay</span><strong>₹92,000</strong></div><div class="metric"><span>Fixed commitments</span><strong>₹49,500</strong></div><div class="metric"><span>Safe weekly spend</span><strong>₹9,815</strong></div></div></section>
+<section class="section"><h2>One question, not another dashboard.</h2><div class="grid3"><div class="card"><b>Enter six numbers</b><p>Take-home pay and five spending buckets. No bank linking.</p></div><div class="card"><b>Get a weekly lane</b><p>A deterministic calculation shows what is safely available.</p></div><div class="card"><b>See two realistic cuts</b><p>GenAI explains trade-offs without guilt or financial jargon.</p></div></div></section>
+<section class="feature" id="try"><span class="eyebrow">TRY THE CORE PROMISE</span><h2>30-Day Reset</h2><p>Enter your monthly numbers. The app calculates your weekly lane and GenAI suggests two concrete cuts.</p>
+<div class="formgrid">
+<div class="field"><label>TAKE-HOME PAY (₹)</label><input id="income" type="number" value="92000"></div>
+<div class="field"><label>RENT / EMI (₹)</label><input id="rent" type="number" value="28000"></div>
+<div class="field"><label>FOOD (₹)</label><input id="food" type="number" value="12000"></div>
+<div class="field"><label>COMMUTE (₹)</label><input id="commute" type="number" value="6000"></div>
+<div class="field"><label>SUBSCRIPTIONS (₹)</label><input id="subs" type="number" value="3500"></div>
+<div class="field"><label>DISCRETIONARY (₹)</label><input id="disc" type="number" value="18000"></div>
+</div>
+<button class="btn primary" style="margin-top:16px" onclick="runPlan()">Generate my reset</button><div id="result" class="result"></div><div class="proof"><div><strong id="plans">—</strong>plans generated</div><div><strong id="avg">—</strong>average monthly saving identified</div></div>
+</section>
+<div class="footer">PaydayMap prototype · GenAI class assignment · Budgeting guidance only.</div></div>
+<script>
+function visitorId(){let id=localStorage.getItem('paydaymap_vid');if(!id){id=crypto.randomUUID();localStorage.setItem('paydaymap_vid',id)}return id}
+async function runPlan(){const box=document.getElementById('result');box.style.display='block';box.textContent='Building your 30-day reset…';const payload={visitor_id:visitorId(),income:+income.value,rent:+rent.value,food:+food.value,commute:+commute.value,subscriptions:+subs.value,discretionary:+disc.value};try{const res=await fetch('/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const data=await res.json();if(!res.ok)throw new Error(data.error||'Something went wrong');box.textContent=data.answer;plans.textContent=data.metrics.plans_generated;avg.textContent='₹'+Math.round(data.metrics.avg_saving).toLocaleString('en-IN')}catch(e){box.textContent=e.message}}
+</script></body></html>
