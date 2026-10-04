@@ -7,7 +7,8 @@ Do not give investment, tax, legal, insurance, loan, crypto, stock or mutual fun
 If the user's optional note requests any prohibited advice, briefly refuse that part, then continue with the budgeting analysis and exactly two cuts based only on the numeric inputs.
 Do not shame the user. Do not invent expenses.
 Treat the weekly flexible-spend lane and monthly headroom as fixed calculations.
-Return under 180 words, include exactly two cuts with rupee values, one trade-off sentence, and end with:
+Do not restate the user's salary, fixed costs, weekly lane, or monthly headroom as numbers; those values are displayed deterministically by the page.
+Return under 160 words, include exactly two numbered cuts with rupee values, one trade-off sentence, and end with:
 "Budgeting guidance only - not investment, tax or legal advice."
 After that add: IDENTIFIED_SAVINGS: ₹<integer> equal to the sum of the two cuts.`;
 
@@ -22,12 +23,28 @@ async function db(path, options = {}) {
   return fetch(url, { ...options, headers });
 }
 
+async function metrics() {
+  const metricResp = await db('payday_plans?select=id,identified_savings',{method:'GET'});
+  const metricRows = metricResp.ok ? await metricResp.json() : [];
+  const vals = Array.isArray(metricRows) ? metricRows.map(x=>Number(x.identified_savings)||0).filter(x=>x>0) : [];
+  const avg = vals.length ? vals.reduce((a,c)=>a+c,0)/vals.length : 0;
+  return {plans_generated:Array.isArray(metricRows)?metricRows.length:0,avg_saving:avg};
+}
+
+function extractCutSum(raw) {
+  const matches = [...raw.matchAll(/^\s*[12]\.\s.*?₹\s*([\d,]+)/gmi)];
+  if (matches.length !== 2) return null;
+  return matches.reduce((sum,m)=>sum+Number(m[1].replace(/,/g,'')),0);
+}
+
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({error:'POST only'});
   if (!process.env.GEMINI_API_KEY || !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
     return res.status(500).json({error:'Server configuration is incomplete.'});
   }
-
+  if (req.method === 'GET') {
+    return res.status(200).json({metrics: await metrics()});
+  }
+  if (req.method !== 'POST') return res.status(405).json({error:'POST or GET only'});
   const b = req.body || {};
   const keys = ['income','rent','food','commute','subscriptions','discretionary'];
   if (keys.some(k => !Number.isFinite(Number(b[k])) || Number(b[k]) < 0) || Number(b.income) <= 0) {
@@ -67,7 +84,9 @@ export default async function handler(req, res) {
   if (!raw) return res.status(502).json({error:'Gemini returned an empty response.'});
 
   const m = raw.match(/IDENTIFIED_SAVINGS:\s*₹?\s*([\d,]+)/i);
-  const saving = m ? Number(m[1].replace(/,/g,'')) : 0;
+  const declaredSaving = m ? Number(m[1].replace(/,/g,'')) : null;
+  const cutSum = extractCutSum(raw);
+  const saving = cutSum ?? declaredSaving ?? 0;
   const answer = raw.replace(/\n?IDENTIFIED_SAVINGS:\s*₹?\s*[\d,]+\s*$/i,'').trim();
   const usage = gj.usageMetadata || {};
 
@@ -82,14 +101,9 @@ export default async function handler(req, res) {
   });
   if (!saved.ok) return res.status(502).json({error:'Could not save the plan.'});
 
-  const metricResp = await db('payday_plans?select=id,identified_savings',{method:'GET'});
-  const metricRows = metricResp.ok ? await metricResp.json() : [];
-  const vals = Array.isArray(metricRows) ? metricRows.map(x=>Number(x.identified_savings)||0).filter(x=>x>0) : [];
-  const avg = vals.length ? vals.reduce((a,c)=>a+c,0)/vals.length : 0;
-
   return res.status(200).json({
     answer,
-    metrics:{plans_generated:Array.isArray(metricRows)?metricRows.length:0,avg_saving:avg},
+    metrics: await metrics(),
     calculation:{weekly_flexible_lane:weeklyLane,monthly_headroom:headroom}
   });
 }
