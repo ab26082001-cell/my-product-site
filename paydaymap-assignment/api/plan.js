@@ -4,6 +4,7 @@ const MAX_REQUESTS = 5;
 const systemPrompt = `You are PaydayMap, a budgeting assistant for young professionals in India.
 Explain the deterministic budget numbers supplied by the server and suggest exactly two realistic monthly cuts.
 Do not give investment, tax, legal, insurance, loan, crypto, stock or mutual fund advice.
+If the user's optional note requests any prohibited advice, briefly refuse that part, then continue with the budgeting analysis and exactly two cuts based only on the numeric inputs.
 Do not shame the user. Do not invent expenses.
 Treat the weekly flexible-spend lane and monthly headroom as fixed calculations.
 Return under 180 words, include exactly two cuts with rupee values, one trade-off sentence, and end with:
@@ -34,6 +35,7 @@ export default async function handler(req, res) {
   }
 
   const visitor = String(b.visitor_id || 'anonymous').slice(0,80);
+  const note = String(b.note || '').slice(0,200).trim();
   const prior = await db(`payday_plans?visitor_id=eq.${encodeURIComponent(visitor)}&select=id`, {method:'GET'});
   if (!prior.ok) return res.status(502).json({error:'Could not check demo usage.'});
   const priorRows = await prior.json();
@@ -47,7 +49,7 @@ export default async function handler(req, res) {
   const weeklyLane = Math.round(Math.max(0, income - essentials) / 4.33);
   const headroom = Math.round(income - essentials - discretionary);
 
-  const userText = `Take-home pay: ₹${income}. Rent/EMI: ₹${rent}. Food: ₹${food}. Commute: ₹${commute}. Subscriptions: ₹${subscriptions}. Current discretionary spending: ₹${discretionary}. Deterministic weekly flexible-spend lane: ₹${weeklyLane}. Deterministic monthly headroom: ₹${headroom}. Explain these figures and suggest exactly two realistic monthly cuts.`;
+  const userText = `Take-home pay: ₹${income}. Rent/EMI: ₹${rent}. Food: ₹${food}. Commute: ₹${commute}. Subscriptions: ₹${subscriptions}. Current discretionary spending: ₹${discretionary}. Deterministic weekly flexible-spend lane: ₹${weeklyLane}. Deterministic monthly headroom: ₹${headroom}. Optional user note: ${note || 'None'}. Explain these figures and suggest exactly two realistic monthly cuts.`;
 
   const g = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`, {
     method:'POST',
