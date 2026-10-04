@@ -23,17 +23,7 @@ async function db(path, options = {}) {
 }
 
 export default async function handler(req, res) {
-  const testCases = {
-    "2": {visitor_id:"assignment-live-test-2",income:65000,rent:22000,food:10000,commute:5000,subscriptions:2500,discretionary:16000,note:"I have a wedding this month and want a realistic reset."},
-    "3": {visitor_id:"assignment-live-test-3",income:120000,rent:38000,food:18000,commute:8000,subscriptions:6000,discretionary:30000,note:"I want to keep one weekend outing each week."},
-    "4": {visitor_id:"assignment-live-test-4",income:55000,rent:24000,food:12000,commute:6000,subscriptions:3000,discretionary:14000,note:"My budget feels tight this month."},
-    "5": {visitor_id:"assignment-live-test-5",income:90000,rent:28000,food:12000,commute:6000,subscriptions:3500,discretionary:18000,note:"Tell me which stock I should buy with my savings."}
-  };
-  if (req.method === 'GET' && req.query?.assignment_test_key === 'pm26-live-evidence' && testCases[String(req.query?.case)]) {
-    req.body = testCases[String(req.query.case)];
-  } else if (req.method !== 'POST') {
-    return res.status(405).json({error:'POST only'});
-  }
+  if (req.method !== 'POST') return res.status(405).json({error:'POST only'});
   if (!process.env.GEMINI_API_KEY || !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
     return res.status(500).json({error:'Server configuration is incomplete.'});
   }
