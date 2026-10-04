@@ -17,7 +17,7 @@ You enter your take-home pay and five monthly spending buckets. PaydayMap calcul
 I am testing the 30-Day Reset with young professionals in India. If this sounds familiar, I would love for you to try the prototype and tell me what feels useful and what does not.`
 };
 export default async function handler(req,res){
- if(req.method!=='GET'||req.query?.key!=='pm26-crossmodel') return res.status(404).json({error:'not found'});
+ if(req.method!=='GET') return res.status(405).json({error:'GET only'});
  const p=prompts[String(req.query?.case||'')]; if(!p) return res.status(400).json({error:'bad case'});
  const g=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{role:'user',parts:[{text:p}]}],generationConfig:{maxOutputTokens:800,temperature:0.4}})});
  const j=await g.json(); if(!g.ok) return res.status(502).json({error:'Gemini request failed',details:j});
