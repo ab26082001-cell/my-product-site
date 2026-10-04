@@ -86,7 +86,7 @@ export default async function handler(req, res) {
   const m = raw.match(/IDENTIFIED_SAVINGS:\s*₹?\s*([\d,]+)/i);
   const declaredSaving = m ? Number(m[1].replace(/,/g,'')) : null;
   const cutSum = extractCutSum(raw);
-  const saving = cutSum ?? declaredSaving ?? 0;
+  const saving = cutSum ?? declaredSaving ?? null;
   const answer = raw.replace(/\n?IDENTIFIED_SAVINGS:\s*₹?\s*[\d,]+\s*$/i,'').trim();
   const usage = gj.usageMetadata || {};
 
