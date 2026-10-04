@@ -20,11 +20,12 @@
 <div class="field"><label>COMMUTE (₹)</label><input id="commute" type="number" value="6000"></div>
 <div class="field"><label>SUBSCRIPTIONS (₹)</label><input id="subs" type="number" value="3500"></div>
 <div class="field"><label>DISCRETIONARY (₹)</label><input id="disc" type="number" value="18000"></div>
+<div class="field" style="grid-column:1/-1"><label>ANYTHING ELSE? (OPTIONAL)</label><input id="note" type="text" maxlength="200" placeholder="e.g., I have a wedding this month"></div>
 </div>
 <button class="btn primary" style="margin-top:16px" onclick="runPlan()">Generate my reset</button><div id="result" class="result"></div><div class="proof"><div><strong id="plans">—</strong>plans generated</div><div><strong id="avg">—</strong>average monthly saving identified</div></div>
 </section>
 <div class="footer">PaydayMap prototype · GenAI class assignment · Budgeting guidance only.</div></div>
 <script>
 function visitorId(){let id=localStorage.getItem('paydaymap_vid');if(!id){id=crypto.randomUUID();localStorage.setItem('paydaymap_vid',id)}return id}
-async function runPlan(){const box=document.getElementById('result');box.style.display='block';box.textContent='Building your 30-day reset…';const payload={visitor_id:visitorId(),income:+income.value,rent:+rent.value,food:+food.value,commute:+commute.value,subscriptions:+subs.value,discretionary:+disc.value};try{const res=await fetch('/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const data=await res.json();if(!res.ok)throw new Error(data.error||'Something went wrong');box.textContent=data.answer;plans.textContent=data.metrics.plans_generated;avg.textContent='₹'+Math.round(data.metrics.avg_saving).toLocaleString('en-IN')}catch(e){box.textContent=e.message}}
+async function runPlan(){const box=document.getElementById('result');box.style.display='block';box.textContent='Building your 30-day reset…';const payload={visitor_id:visitorId(),income:+income.value,rent:+rent.value,food:+food.value,commute:+commute.value,subscriptions:+subs.value,discretionary:+disc.value,note:note.value};try{const res=await fetch('/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const data=await res.json();if(!res.ok)throw new Error(data.error||'Something went wrong');box.textContent=data.answer;plans.textContent=data.metrics.plans_generated;avg.textContent='₹'+Math.round(data.metrics.avg_saving).toLocaleString('en-IN')}catch(e){box.textContent=e.message}}
 </script></body></html>
